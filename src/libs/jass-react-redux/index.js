@@ -16,22 +16,20 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 
 // Provider组件
-export class Provider extends Component {
+export default class Provider extends Component {
   static propTypes = {
     store: PropTypes.object.isRequired
   }
 
   // 声明向子组件提供哪些context数据
-  static childContextType = {
+  static childContextTypes = {
     store: PropTypes.object.isRequired
   }
   
   // 为子组件提供包含store的context
   getChildContext() {
     // 返回context对象
-    return {
-      store: this.props.store
-    }
+    return { store: this.props.store }
   }
 
   render () {
@@ -41,21 +39,21 @@ export class Provider extends Component {
 }
 
 // connect函数
-export function connect(mapStateToProps, mapDispatchToProps) {
+export function connect(mapStateToProps = () => null, mapDispatchToProps = {}) {
   // 返回一个函数(接收一个组件)
   return (WrapComponent) => {
     // 返回一个容器组件
     return class ConnectComponent extends Component {
       // 声明获取context数据
-      static contextType = {
+      static contextTypes = {
         store: PropTypes.object.isRequired
       }
 
       constructor (props, context) {
-        super(props, context)
+        super(props)
 
         // 得到store
-        const store = context.store
+        const { store } = context
 
         // 包含一般属性的对象
         const stateProps = mapStateToProps(store.getState())
@@ -63,7 +61,7 @@ export function connect(mapStateToProps, mapDispatchToProps) {
         const dispatchProps = this.bindActionCreators(mapDispatchToProps)
 
         // 将所有的一般属性保存到state中
-        this.state = {...stateProps}
+        this.state = { ...stateProps }
 
         // 将所有函数属性的对象保存到组件对象
         this.dispatchProps = dispatchProps
@@ -85,12 +83,13 @@ export function connect(mapStateToProps, mapDispatchToProps) {
       }
 
       componentDidMount () {
+        console.log('componentDidMount', this.constructor)
         // 得到store
-        const store = this.context.store
+        const { store } = this.context
         // 订阅监听
-        this.context.store.subscribe(() => {
+        store.subscribe(() => {
           // redux中产生新的state,更新当前组件的状态
-          this.setState(mapStateToProps(store ))
+          this.setState(mapStateToProps(store.getState()))
         })
       }
 
